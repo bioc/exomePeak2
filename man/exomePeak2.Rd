@@ -23,14 +23,14 @@ exomePeak2(
   min_peak_width = fragment_length/2,
   max_peak_width = Inf,
   pc_count_cutoff = 0,
-  bg_count_cutoff = 50,
+  bg_count_cutoff = 5,
   p_cutoff = 1e-05,
   p_adj_cutoff = NULL,
   log2FC_cutoff = 0,
   parallel = 1,
   background_method = c("Gaussian_mixture", "m6Aseq_prior", "manual", "all"),
   manual_background = NULL,
-  correct_GC_bg = TRUE,
+  correct_GC_bg = FALSE,
   qtnorm = FALSE,
   glm_type = c("DESeq2", "Poisson", "NB"),
   LFC_shrinkage = c("apeglm", "ashr", "Gaussian", "none"),
@@ -95,9 +95,9 @@ The single base annotation will be flanked by length = floor(fragment_length - b
 
 \item{max_peak_width}{a \code{numeric} value for the maximum width of the merged peaks; default \code{= Inf} .}
 
-\item{pc_count_cutoff}{a \code{numeric} value for the cutoff on average window's reads count in peak calling; default \code{= 5}.}
+\item{pc_count_cutoff}{a \code{numeric} value for the cutoff on average window's reads count in peak calling; default \code{= 0}.}
 
-\item{bg_count_cutoff}{a \code{numeric} value for the cutoff on average window's reads count in background identification; default \code{= 50}.}
+\item{bg_count_cutoff}{a \code{numeric} value for the cutoff on average window's reads count in background identification; default \code{= 5}.}
 
 \item{p_cutoff}{a \code{numeric} value for the cutoff on p values in peak calling; default \code{= 1e-05}.}
 

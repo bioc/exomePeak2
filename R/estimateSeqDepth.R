@@ -63,23 +63,23 @@ setMethod("estimateSeqDepth",
     Background_peaks_indx <- grepl("control", rownames(sep))
     if(sum(Background_peaks_indx) == 0) {
     warning("Cannot find Background peaks, the size factors are estimated using the modification containing peaks.", call. = F,immediate. = T)
-    sep$sizeFactor <- estimateSizeFactorsForMatrix(assay( sep ) )
+    sep$sizeFactor <- apply(assay( sep ), 2, function(x)median(x[x>0]))
     } else {
      if(all(rowSums(assay( sep[Background_peaks_indx,])==0)>=1)){
        sep$sizeFactor <- sizeFactors(estimateSizeFactors(sep, controlGenes = Background_peaks_indx, type = "poscounts"))
      }else{
-       sep$sizeFactor <- estimateSizeFactorsForMatrix(assay( sep[Background_peaks_indx,] )) 
+       sep$sizeFactor <- apply(assay( sep[Background_peaks_indx,] ), 2, function(x) median(x[x>0])) 
      }
     }
   }
   
   if(from == "Modification"){
     mod_peaks_indx <- grepl("peak", rownames(sep))
-    sep$sizeFactor <- estimateSizeFactorsForMatrix(assay( sep[mod_peaks_indx,] ) )
+    sep$sizeFactor <- apply(assay( sep[mod_peaks_indx,] ), 2, function(x) median(x[x>0])) 
   }
 
   if(from == "All"){
-    sep$sizeFactor <- estimateSizeFactorsForMatrix(assay( sep ) )
+    sep$sizeFactor <- apply(assay( sep ), 2, function(x)median(x[x>0])) 
   }
   return(sep)
 })

@@ -45,7 +45,7 @@
 #'
 #' @param pc_count_cutoff a \code{numeric} value for the cutoff on average window's reads count in peak calling; default \code{= 0}.
 #'
-#' @param bg_count_cutoff a \code{numeric} value for the cutoff on average window's reads count in background identification; default \code{= 50}.
+#' @param bg_count_cutoff a \code{numeric} value for the cutoff on average window's reads count in background identification; default \code{= 5}.
 #'
 #' @param p_cutoff a \code{numeric} value for the cutoff on p values in peak calling; default \code{= 1e-05}.
 #'
@@ -67,7 +67,7 @@
 #'
 #' @param manual_background  a \code{\link{GRanges}} object for the user provided unmodified background; default \code{= NULL}.
 #'
-#' @param correct_GC_bg a \code{logical} value of whether to estimate the GC content linear effect on background regions; default \code{= TRUE}.
+#' @param correct_GC_bg a \code{logical} value of whether to estimate the GC content linear effect on background regions; default \code{= FALSE}.
 #'
 #' If \code{= TRUE}, it could lead to a more accurate estimation of GC content bias for the RNA modifications that are highly biologically related to GC content.
 #'
@@ -192,7 +192,7 @@ setMethod("exomePeakCalling",
                                          "manual",
                                          "all"),
                    manual_background = NULL,
-                   correct_GC_bg = TRUE,
+                   correct_GC_bg = FALSE,
                    qtnorm = FALSE,
                    gff_dir = NULL,
                    fragment_length = 100,
@@ -201,7 +201,7 @@ setMethod("exomePeakCalling",
                    min_peak_width = fragment_length/2,
                    max_peak_width = Inf,
                    pc_count_cutoff = 0,
-                   bg_count_cutoff = 50,
+                   bg_count_cutoff = 5,
                    p_cutoff = 1e-05,
                    p_adj_cutoff = NULL,
                    log2FC_cutoff = 0,

@@ -56,13 +56,20 @@ GLM_inference <- function(SE_bins,
   ######################################################
   #               Size factor estimation               #
   ######################################################
-  #The IP and input size factors are estimated separately
-  #It will use the median of ratio of geometric mean method implemented in DESeq2 
+
   if(!is.null(rowData(dds)$indx_bg)){
-    dds$sizeFactor <- estimateSizeFactorsForMatrix(assay(dds)[rowData(dds)$indx_bg,]) 
+    dds$sizeFactor <- apply(assay(dds)[rowData(dds)$indx_bg,], 2, function(x) median(x[x>0]))
   }else{
-    dds$sizeFactor <- estimateSizeFactorsForMatrix(assay(dds))
+    dds$sizeFactor <- apply(assay(dds), 2, function(x) median(x[x>0]))
   }
+
+  # #Calculate size factors
+  # 
+  # dds$sizeFactor <- rep(NA, ncol(assay(dds)))
+  # 
+  # dds$sizeFactor[dds$design_IP == "IP"] <- apply(assay(dds)[,dds$design_IP == "IP"], 2, function(x) median(x[x>0]))
+  # 
+  # dds$sizeFactor[dds$design_IP == "input"] <- apply(assay(dds)[,dds$design_IP == "input"], 2, function(x) mean(x[x>0]))
   
   if (!is.null(rowData(SE_bins)$gc_contents)){
 

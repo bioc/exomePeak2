@@ -80,9 +80,9 @@
 #'
 #' By default, the DESeq2 GLMs are fitted on the data set with > 1 biological replicates for both the IP and input samples, the Poisson GLM will be fitted otherwise.
 #'
-#' @param pc_count_cutoff a \code{numeric} value for the cutoff on average window's reads count in peak calling; default \code{= 5}.
+#' @param pc_count_cutoff a \code{numeric} value for the cutoff on average window's reads count in peak calling; default \code{= 0}.
 #'
-#' @param bg_count_cutoff a \code{numeric} value for the cutoff on average window's reads count in background identification; default \code{= 50}.
+#' @param bg_count_cutoff a \code{numeric} value for the cutoff on average window's reads count in background identification; default \code{= 5}.
 #'
 #' @param p_cutoff a \code{numeric} value for the cutoff on p values in peak calling; default \code{= 1e-05}.
 #'
@@ -264,7 +264,7 @@ exomePeak2 <- function(bam_ip = NULL,
                        min_peak_width = fragment_length/2,
                        max_peak_width = Inf,
                        pc_count_cutoff = 0,
-                       bg_count_cutoff = 50,
+                       bg_count_cutoff = 5,
                        p_cutoff = 1e-05,
                        p_adj_cutoff = NULL,
                        log2FC_cutoff = 0,
@@ -274,7 +274,7 @@ exomePeak2 <- function(bam_ip = NULL,
                                              "manual",
                                              "all"),
                        manual_background = NULL,
-                       correct_GC_bg = TRUE,
+                       correct_GC_bg = FALSE,
                        qtnorm = FALSE,
                        glm_type = c("DESeq2",
                                     "Poisson",
@@ -401,11 +401,7 @@ sep <- exomePeakCalling(merip_bams = merip_bam_lst,
                         qtnorm = qtnorm
 )
 
-if(any(sep$design_Treatment)){
-sep <- estimateSeqDepth(sep, from='Background')
-}else{
 sep <- estimateSeqDepth(sep)  
-}
 
 if(!is.null(bsgenome)) {
 

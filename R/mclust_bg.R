@@ -75,7 +75,7 @@ colnames(model_matrix) <- paste0("sample_",seq_len(ncol(model_matrix)))
 if(!is.null(rowData(se_peak_counts)$gc_contents)) model_matrix$GC <- rowData(se_peak_counts)$gc_contents[rowData(se_peak_counts)$indx_gc_est]
 
 #Apply univariate Gaussian mixture if there is only one column.
-#Classify the bins using bayesian classifier
+#Classify the bins using Bayes classifier
 if(ncol(model_matrix) == 1){
 
 mod_mix <- densityMclust(as.numeric( model_matrix[,1]), G = 2, modelNames = "V")

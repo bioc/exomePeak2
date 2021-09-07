@@ -22,7 +22,6 @@ reads_five_POS <- function(reads,
     reads_pos <- resize(reads, width = width, fix = fix, ...)
     reads_pos <- split(reads_pos, indx_lst)
     return(reads_pos)
-
   } else {
     reads <- as(reads, "GRanges")
     reads_pos <- resize(reads, width = width, fix = fix, ...)
