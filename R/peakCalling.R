@@ -16,7 +16,9 @@ peakCalling <- function(bam_IP,
                         plot_gc = FALSE,
                         parallel = 1,
                         motif_based = FALSE,
-                        motif_sequence = "DRACH"){
+                        motif_sequence = "DRACH",
+                        fig_dir = "exomePeak2_output",
+                        mode = c("exon","full_transcript","whole_genome")){
   #require(GenomicRanges)
   #require(SummarizedExperiment)
   #require(DESeq2)
@@ -99,13 +101,18 @@ peakCalling <- function(bam_IP,
   message("OK")
 
   ## Plot GC bias fits
-  if(plot_gc) plotGCbias(se) %>% quiet
+  if(plot_gc) plotGCbias(se, fig_dir) %>% quiet
 
   }else{
   #Assign matrix correction factors without GC offsets
   se <- estimateMatrixFactors(se) %>% quiet
   }
 
+  #Filter low count rows if not exon mode
+  if(mode %in% c("full_transcript","whole_genome")){
+    se <- se[rowMeans(assay(se)) >= 5,]
+  }
+  
   #DESeq2 peak calling
   message("Detect peaks with GLM ... ", appendLF = F)
   peaks <- callPeaks(se, txdb, test_method, p_cutoff, exByGene, bin_size, motif_based) %>% quiet

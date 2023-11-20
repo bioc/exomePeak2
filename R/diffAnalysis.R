@@ -18,7 +18,10 @@ diffAnalysis <- function(bam_IP,
                          plot_gc = FALSE,
                          parallel = 1,
                          motif_based = FALSE,
-                         motif_sequence = "DRACH"){
+                         motif_sequence = "DRACH",
+                         absolute_diff = FALSE,
+                         fig_dir = "exomePeak2_output"),
+                         mode = c("exon","full_transcript","whole_genome")){
   #require(GenomicRanges)
   #require(GenomicFeatures)
   #require(SummarizedExperiment)
@@ -106,13 +109,18 @@ diffAnalysis <- function(bam_IP,
   message("OK")
 
   ## Plot GC bias fits
-  if(plot_gc) plotGCbias(se) %>% quiet
+  if(plot_gc) plotGCbias(se, fig_dir) %>% quiet
 
   }else{
   #Assign matrix correction factors without GC offsets
   se <- estimateMatrixFactors(se) %>% quiet
   }
-
+  
+  #Filter low count rows if not exon mode
+  if(mode %in% c("full_transcript","whole_genome")){
+    se <- se[rowMeans(assay(se)) >= 5,]
+  }
+  
   #Peak calling
   message("Detect peaks with GLM ... ", appendLF = F)
   peaks <- callPeaks(se, txdb, test_method, p_cutoff, exByGene, bin_size, motif_based) %>% quiet
@@ -138,8 +146,12 @@ diffAnalysis <- function(bam_IP,
   message("OK")
 
   #Differential calling
-  message("Detect differentially modified peaks with interactive GLM ... ", appendLF = F)
-  diffPeaks <- callDiff(se2, txdb, test_method, 1e-2, exByGene, bin_size, alt_hypothesis, lfc_threshold, motif_based) %>% quiet
+  if(!absolute_diff){
+    message("Detect differentially modified peaks with interactive GLM ... ", appendLF = F)  
+  }else{
+    message("Detect absolute differentially modified peaks with GLM ... ", appendLF = F)  
+  }
+  diffPeaks <- callDiff(se2, txdb, test_method, 1e-2, exByGene, bin_size, alt_hypothesis, lfc_threshold, motif_based, absolute_diff) %>% quiet
   message("OK")
 
   return(diffPeaks)

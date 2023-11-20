@@ -1,4 +1,4 @@
-## A function to identify unmodified background using gaussian mixture model
+## A function to identify unmodified background using Gaussian mixture model
 classifyBackground <- function(se, gmm_cut = 5){
   #require(mclust)
   IP_count <- assay(se[,se$IP_input == "IP"])
@@ -196,13 +196,19 @@ callDiff <- function(se,
                      bin_size,
                      alt_hypothesis,
                      lfc_threshold,
-                     motif_based){
+                     motif_based,
+                     absolute_diff){
   #Set reference levels
   se$IP_input <- relevel(factor(se$IP_input),"input")
   se$Perturbation <- relevel(factor(se$Perturbation),"C")
-  dds <- DESeqDataSet(se, ~ IP_input * Perturbation)
-
-  normalizationFactors(dds) <- assays(se)[["sfm"]]
+  
+  if(!absolute_diff){
+    dds <- DESeqDataSet(se, ~ IP_input * Perturbation)
+    normalizationFactors(dds) <- assays(se)[["sfm"]]
+  }else{
+    dds <- DESeqDataSet(se[,se$IP_input!="input"], ~ Perturbation)
+    normalizationFactors(dds) <- assays(se[,se$IP_input!="input"])[["sfm"]]
+  }
 
   #Fit differential models
   if(test_method == "DESeq2"){
@@ -228,5 +234,3 @@ callDiff <- function(se,
   mcols(peak) <- makePeakAnnot(peak, se, res, exbg)
   return(peak)
 }
-
-
