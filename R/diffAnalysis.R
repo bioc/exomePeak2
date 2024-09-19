@@ -14,11 +14,16 @@ diffAnalysis <- function(bam_IP,
                          test_method = c("Poisson", "DESeq2"),
                          p_cutoff = 1e-10,
                          lfc_threshold = 0,
+                         diff_p_cutoff = 0.01,
                          alt_hypothesis = c("greaterAbs", "lessAbs", "greater", "less"),
                          plot_gc = FALSE,
                          parallel = 1,
                          motif_based = FALSE,
-                         motif_sequence = "DRACH"){
+                         motif_sequence = "DRACH",
+                         absolute_diff = FALSE,
+                         fig_dir = "exomePeak2_output",
+                         mode = c("exon","full_transcript","whole_genome"),
+                         confounding_factor = NULL){
   #require(GenomicRanges)
   #require(GenomicFeatures)
   #require(SummarizedExperiment)
@@ -53,7 +58,7 @@ diffAnalysis <- function(bam_IP,
   }
 
   #Extract bins for count
-  message("Extract bin features ... ", appendLF = F)
+  message("Extract bin features ... ", appendLF = FALSE)
   exByGene  <- exonsByiGenes(txdb) %>% quiet
   if(!motif_based){
     peakBins <- exonicBins(exByGene, bin_size, step_size) %>% quiet
@@ -66,7 +71,7 @@ diffAnalysis <- function(bam_IP,
   message("OK")
 
   #Count the bam files
-  message("Count reads on bin features ... ", appendLF = F)
+  message("Count reads on bin features ... ", appendLF = FALSE)
   bam_dirs <- c(bam_IP, bam_IP_treated, bam_input, bam_input_treated)
   se <- featuresCounts(peakBins, bam_dirs, strandness, parallel) %>% quiet
   message("OK")
@@ -80,46 +85,51 @@ diffAnalysis <- function(bam_IP,
 
 
   #Identify Backgrounds
-  message("Identify background features ... ", appendLF = F)
+  message("Identify background features ... ", appendLF = FALSE)
   se <- classifyBackground(se) %>% quiet
   message("OK")
 
   #Estimate sample size factors
-  message("Estimate sample sepecific size factors from the background ... ", appendLF = F)
+  message("Estimate sample sepecific size factors from the background ... ", appendLF = FALSE)
   se <- estimateColumnFactors(se) %>% quiet
   message("OK")
 
   if(!is.null(genome)){
   #Calculate GC contents
-  message("Calculate bin GC contents on exons ... ", appendLF = F)
+  message("Calculate bin GC contents on exons ... ", appendLF = FALSE)
   se <- calculateGCcontents(se, fragment_length, exByGene, genome) %>% quiet
   message("OK")
 
   #Fit GC content biases
-  message("Fit GC curves with smoothing splines ... ", appendLF = F)
+  message("Fit GC curves with smoothing splines ... ", appendLF = FALSE)
   se <- fitBiasCurves(se) %>% quiet
   message("OK")
 
   #Estimate matrix correction factors
-  message("Calculate offset matrix for bins ... ", appendLF = F)
+  message("Calculate offset matrix for bins ... ", appendLF = FALSE)
   se <- estimateMatrixFactors(se) %>% quiet
   message("OK")
 
   ## Plot GC bias fits
-  if(plot_gc) plotGCbias(se) %>% quiet
+  if(plot_gc) plotGCbias(se, fig_dir) %>% quiet
 
   }else{
   #Assign matrix correction factors without GC offsets
   se <- estimateMatrixFactors(se) %>% quiet
   }
-
+  
+  #Filter low count rows if not exon mode
+  if(mode %in% c("full_transcript","whole_genome")){
+    se <- se[rowMeans(assay(se)) >= 5,]
+  }
+  
   #Peak calling
-  message("Detect peaks with GLM ... ", appendLF = F)
-  peaks <- callPeaks(se, txdb, test_method, p_cutoff, exByGene, bin_size, motif_based) %>% quiet
+  message("Detect peaks with GLM ... ", appendLF = FALSE)
+  peaks <- callPeaks(se, txdb, test_method, p_cutoff, exByGene, bin_size, motif_based, confounding_factor) %>% quiet
   message("OK")
 
   #Count the bam files
-  message("Count reads on peaks ... ", appendLF = F)
+  message("Count reads on peaks ... ", appendLF = FALSE)
   se2 <- featuresCounts(peaks, bam_dirs, strandness, parallel) %>% quiet
   rm(bam_dirs, peaks)
   message("OK")
@@ -133,13 +143,17 @@ diffAnalysis <- function(bam_IP,
   se2 <- calculateGCcontents(se2, fragment_length, exByGene, genome) %>% quiet
 
   #Estimate matrix correction factors
-  message("Calculate offset matrix for peaks ... ", appendLF = F)
+  message("Calculate offset matrix for peaks ... ", appendLF = FALSE)
   se2 <- estimateMatrixFactors(se2) %>% quiet
   message("OK")
 
   #Differential calling
-  message("Detect differentially modified peaks with interactive GLM ... ", appendLF = F)
-  diffPeaks <- callDiff(se2, txdb, test_method, 1e-2, exByGene, bin_size, alt_hypothesis, lfc_threshold, motif_based) %>% quiet
+  if(!absolute_diff){
+    message("Detect differentially modified peaks with interactive GLM ... ", appendLF = FALSE)  
+  }else{
+    message("Detect absolute differentially modified peaks with GLM ... ", appendLF = FALSE)  
+  }
+  diffPeaks <- callDiff(se2, txdb, test_method, diff_p_cutoff, exByGene, bin_size, alt_hypothesis, lfc_threshold, motif_based, absolute_diff, confounding_factor) %>% quiet
   message("OK")
 
   return(diffPeaks)

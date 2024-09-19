@@ -122,6 +122,10 @@ exonicBins <- function(exByGene,
   #Removal of introns is time consuming ~ 1min.
   bins_on_genome <-
     removeIntrons(bins_on_genome, exByGene)
+  
+  indx <- which(sum(width(bins_on_genome)) > binWidth)
+  
+  if(length(indx) > 0) bins_on_genome <- bins_on_genome[-1*indx]
 
   return(bins_on_genome)
 }
@@ -148,7 +152,8 @@ removeIntrons <- function(grl,
                         type = "within")
 
     #Remove all the hits that are inter-genes.
-    indx_keep <- names(introns_granges)[queryHits(fol)] == gsub("\\.[0-9]*$","",names(exByGene))[grl$transcriptsHits[subjectHits(fol)]]
+    #indx_keep <- names(introns_granges)[queryHits(fol)] == gsub("\\.[0-9]*$","",names(exByGene))[grl$transcriptsHits[subjectHits(fol)]]
+    indx_keep <- names(introns_granges)[queryHits(fol)] == names(exByGene)[grl$transcriptsHits[subjectHits(fol)]]
     fol <- fol[indx_keep,]
 
     #Split, and re-define the start and ends of those hitted bins.
@@ -434,9 +439,9 @@ convertTxDb <- function(txdb,type = c("full_transcript", "whole_genome")){
 makePeakAnnot <- function(peak, se, res, exbg, identity = FALSE){
   fol <- findOverlaps(peak, se, type = ifelse(identity, "equal", "any"))
 
-  annotCols <- data.frame(pvalue = tapply(res$pvalue[subjectHits(fol)], queryHits(fol), mean),
-                          fdr = tapply(res$padj[subjectHits(fol)], queryHits(fol), mean),
-                          log2FC = tapply(res$log2FoldChange[subjectHits(fol)], queryHits(fol), mean))
+  annotCols <- data.frame(pvalue = tapply(res$pvalue[subjectHits(fol)], queryHits(fol), mean, na.rm = TRUE),
+                          fdr = tapply(res$padj[subjectHits(fol)], queryHits(fol), mean, na.rm = TRUE),
+                          log2FC = tapply(res$log2FoldChange[subjectHits(fol)], queryHits(fol), mean, na.rm = TRUE))
 
   if(is.null(se$Perturbation)){
     annotCols$RPM.IP <- rpm(se, se$IP_input == "IP", fol)
@@ -465,7 +470,7 @@ rpm <- function(se, col_indx, fol){
   count <- rowSums(cbind(assay(se)[, col_indx]))
   RPM <- count/sum(count)*1e6
   RPM <- tapply(RPM[subjectHits(fol)], queryHits(fol), sum)
-  RPM <- round(RPM, 2)
+  RPM <- round(RPM, 5)
   return(RPM)
 }
 
